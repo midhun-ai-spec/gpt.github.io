@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Personal Hub</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#60a5fa;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box;font-family:Inter,Segoe UI,system-ui,Segoe,Roboto,Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071029 0%, #071a2b 100%);color:#e6eef6}
+    .wrap{max-width:1100px;margin:28px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{font-size:20px;margin:0}
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-top:18px}
+    nav{display:flex;gap:8px;flex-wrap:wrap}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer}
+    button.primary{background:linear-gradient(90deg,#2563eb,#06b6d4);border:0}
+    .hidden{display:none}
+    .section{margin-top:12px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text],input[type=password],textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit}
+    textarea{min-height:120px;resize:vertical}
+    .list{margin-top:8px;display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;padding-right:8px}
+    .item{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+    pre{white-space:pre-wrap;margin:0;font-family:monospace;background:transparent}
+    .thumb{width:60px;height:40px;object-fit:cover;border-radius:6px}
+    .small{font-size:12px;color:var(--muted)}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}.wrap{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>My Personal Hub</h1>
+        <div class="small">Notes · Code snippets · Images — local only</div>
+      </div>
+      <div id="userPanel">
+        <span id="welcomeTxt" class="small"></span>
+        <button id="logoutBtn" class="hidden">Logout</button>
+      </div>
+    </header>
+
+    <!-- Authentication / setup -->
+    <div id="auth" class="card section">
+      <div id="authInner">
+        <div id="signupBox">
+          <label>Set a password (for local use)</label>
+          <input id="setupPass" type="password" placeholder="Create password" />
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="setupBtn" class="primary">Create</button>
+            <button id="skipSetup">Use without password</button>
+          </div>
+          <p class="small" style="margin-top:8px">This stores a hashed password in your browser's localStorage. It's for convenience only — not for high security.</p>
+        </div>
+
+        <div id="loginBox" class="hidden">
+          <label>Enter password to unlock</label>
+          <input id="loginPass" type="password" placeholder="Password" />
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="loginBtn" class="primary">Unlock</button>
+            <button id="goSignup">Create password</button>
+          </div>
+          <p class="small">If you forget the password, you can import a backup JSON file to restore data.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main app -->
+    <div id="app" class="hidden">
+      <div class="grid">
+        <div>
+          <div class="card">
+            <nav>
+              <button id="tabNotes" class="primary">Notes</button>
+              <button id="tabSnippets">Snippets</button>
+              <button id="tabImages">Images</button>
+              <button id="tabSettings">Settings</button>
+            </nav>
+
+            <div id="notesSection" class="section">
+              <label>New Note title</label>
+              <input id="noteTitle" type="text" placeholder="eg: Study plan" />
+              <label>Note</label>
+              <textarea id="noteBody" placeholder="Write your note..."></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="saveNote" class="primary">Save note</button>
+                <button id="clearNote">Clear</button>
+              </div>
+              <div class="list" id="notesList"></div>
+            </div>
+
+            <div id="snippetsSection" class="section hidden">
+              <label>Snippet title</label>
+              <input id="sTitle" type="text" placeholder="eg: Quick sort" />
+              <label>Language</label>
+              <input id="sLang" type="text" placeholder="eg: python, html" />
+              <label>Code</label>
+              <textarea id="sCode" placeholder="Paste code here..."></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="saveSnippet" class="primary">Save snippet</button>
+                <button id="clearSnippet">Clear</button>
+              </div>
+              <div class="list" id="snippetsList"></div>
+            </div>
+
+            <div id="imagesSection" class="section hidden">
+              <label>Upload images</label>
+              <input id="imgInput" type="file" accept="image/*" multiple />
+              <div class="list" id="imagesList"></div>
+            </div>
+
+            <div id="settingsSection" class="section hidden">
+              <label>Export / Import backup</label>
+              <div style="display:flex;gap:8px">
+                <button id="exportBtn">Export JSON</button>
+                <input id="importFile" type="file" accept="application/json" />
+              </div>
+              <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
+              <label>Change password</label>
+              <input id="oldPass" type="password" placeholder="Current password" />
+              <input id="newPass" type="password" placeholder="New password" style="margin-top:8px" />
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="changePassBtn">Change</button>
+                <button id="removePass">Remove password</button>
+              </div>
+              <p class="small" style="margin-top:8px">Removing password will allow anyone with access to this browser profile to see your data. Use export before removing if unsure.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <aside>
+          <div class="card">
+            <h3>Quick actions</h3>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              <button id="newNoteQuick">New note</button>
+              <button id="newSnippetQuick">New snippet</button>
+              <button id="focusImages">Open images</button>
+              <button id="backupQuick">Download backup</button>
+            </div>
+            <div style="margin-top:12px">
+              <h4>Usage</h4>
+              <p class="small">Save notes, snippets and images locally in your browser. Use Export to create a JSON backup that you can store elsewhere.</p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h4>About</h4>
+            <p class="small">This is a single-file app that uses localStorage. It works offline and in private windows (until storage is cleared). For hosting on the web, you can publish this file to GitHub Pages.</p>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="small">Made with ❤️ — Data stored locally on this browser only.</footer>
+    </div>
+  </div>
+
+  <script>
+    /* Simple local single-page app that stores data in localStorage.
+       - Data shape: {notes:[],snippets:[],images:[]}
+       - Password hashed with SHA-256 using SubtleCrypto (not bulletproof, but better than plain text)
+       - Export/Import available
+    */
+
+    const $ = id=>document.getElementById(id);
+    const stateKey = 'my_personal_hub_v1';
+    const passKey = 'my_personal_hub_pass_v1';
+
+    // helpers
+    async function sha256(str){
+      const enc = new TextEncoder().encode(str);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function loadState(){
+      try{return JSON.parse(localStorage.getItem(stateKey))||{notes:[],snippets:[],images:[]}}catch(e){return {notes:[],snippets:[],images:[]}}}
+    function saveState(s){localStorage.setItem(stateKey,JSON.stringify(s))}
+
+    // render functions
+    function renderNotes(){
+      const list=$('notesList');list.innerHTML='';
+      const s=loadState();
+      s.notes.slice().reverse().forEach((n,idx)=>{
+        const div=document.createElement('div');div.className='item';
+        div.innerHTML=`<div style="flex:1"><strong>${escapeHtml(n.title||'Untitled')}</strong><div class="small">${new Date(n.ts).toLocaleString()}</div><pre>${escapeHtml(n.body)}</pre></div><div style="display:flex;flex-direction:column;gap:6px"><button data-i='${s.notes.length-1-idx}' class='editNote'>Edit</button><button data-i='${s.notes.length-1-idx}' class='delNote'>Delete</button></div>`;
+        list.appendChild(div);
+      })
+    }
+
+    function renderSnippets(){
+      const list=$('snippetsList');list.innerHTML='';
+      const s=loadState();
+      s.snippets.slice().reverse().forEach((n,idx)=>{
+        const div=document.createElement('div');div.className='item';
+        div.innerHTML=`<div style="flex:1"><strong>${escapeHtml(n.title||'Untitled')} <span class='small'>${escapeHtml(n.lang||'')}</span></strong><div class='small'>${new Date(n.ts).toLocaleString()}</div><pre>${escapeHtml(n.code)}</pre></div><div style="display:flex;flex-direction:column;gap:6px"><button data-i='${s.snippets.length-1-idx}' class='copySnip'>Copy</button><button data-i='${s.snippets.length-1-idx}' class='delSnip'>Delete</button></div>`;
+        list.appendChild(div);
+      })
+    }
+
+    function renderImages(){
+      const list=$('imagesList');list.innerHTML='';
+      const s=loadState();
+      s.images.slice().reverse().forEach((img,idx)=>{
+        const div=document.createElement('div');div.className='item';
+        div.innerHTML=`<div style='display:flex;gap:8px;align-items:center'><img class='thumb' src='${img.data}' alt='img'/><div><strong>${escapeHtml(img.name||'image')}</strong><div class='small'>${new Date(img.ts).toLocaleString()}</div></div></div><div style='display:flex;flex-direction:column;gap:6px'><a href='${img.data}' download='${img.name||'image.png'}'><button>Download</button></a><button data-i='${s.images.length-1-idx}' class='delImg'>Delete</button></div>`;
+        list.appendChild(div);
+      })
+    }
+
+    function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+
+    // actions
+    $('saveNote').addEventListener('click',()=>{
+      const title=$('noteTitle').value.trim();const body=$('noteBody').value.trim();
+      if(!title && !body) return alert('Write something first');
+      const s=loadState();s.notes.push({title,body,ts:Date.now()});saveState(s);$('noteTitle').value='';$('noteBody').value='';renderNotes();
+    })
+
+    $('saveSnippet').addEventListener('click',()=>{
+      const title=$('sTitle').value.trim();const lang=$('sLang').value.trim();const code=$('sCode').value.trim();
+      if(!code) return alert('Add code first');
+      const s=loadState();s.snippets.push({title,lang,code,ts:Date.now()});saveState(s);$('sTitle').value='';$('sLang').value='';$('sCode').value='';renderSnippets();
+    })
+
+    // delegation
+    document.addEventListener('click',e=>{
+      if(e.target.classList.contains('delNote')){
+        const i=+e.target.dataset.i;const s=loadState();s.notes.splice(i,1);saveState(s);renderNotes();
+      }
+      if(e.target.classList.contains('editNote')){
+        const i=+e.target.dataset.i;const s=loadState();const n=s.notes[i];$('noteTitle').value=n.title;$('noteBody').value=n.body;window.scrollTo(0,0);
+      }
+      if(e.target.classList.contains('delSnip')){const i=+e.target.dataset.i;const s=loadState();s.snippets.splice(i,1);saveState(s);renderSnippets();}
+      if(e.target.classList.contains('copySnip')){const i=+e.target.dataset.i;const s=loadState();navigator.clipboard.writeText(s.snippets[i].code).then(()=>alert('Copied'))}
+      if(e.target.classList.contains('delImg')){const i=+e.target.dataset.i;const s=loadState();s.images.splice(i,1);saveState(s);renderImages();}
+    })
+
+    // image upload
+    $('imgInput').addEventListener('change',e=>{
+      const files=Array.from(e.target.files);const s=loadState();
+      files.forEach(f=>{
+        const reader=new FileReader();reader.onload=ev=>{
+          s.images.push({name:f.name,data:ev.target.result,ts:Date.now()});saveState(s);renderImages();
+        };reader.readAsDataURL(f);
+      })
+      e.target.value='';
+    })
+
+    // tabs
+    $('tabNotes').addEventListener('click',()=>{showTab('notes')});
+    $('tabSnippets').addEventListener('click',()=>{showTab('snips')});
+    $('tabImages').addEventListener('click',()=>{showTab('imgs')});
+    $('tabSettings').addEventListener('click',()=>{showTab('set')});
+    function showTab(t){
+      $('notesSection').classList.toggle('hidden',t!=='notes');
+      $('snippetsSection').classList.toggle('hidden',t!=='snips');
+      $('imagesSection').classList.toggle('hidden',t!=='imgs');
+      $('settingsSection').classList.toggle('hidden',t!=='set');
+    }
+
+    // quick actions
+    $('newNoteQuick').addEventListener('click',()=>{showTab('notes');$('noteTitle').focus()});
+    $('newSnippetQuick').addEventListener('click',()=>{showTab('snips');$('sTitle').focus()});
+    $('focusImages').addEventListener('click',()=>{showTab('imgs');});
+    $('backupQuick').addEventListener('click',()=>exportBackup());
+
+    // export/import
+    function exportBackup(){const s=loadState();const blob=new Blob([JSON.stringify(s, null, 2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='hub-backup-'+new Date().toISOString().slice(0,19).replace(/:/g,'')+'.json';a.click();}
+    $('exportBtn').addEventListener('click',exportBackup);
+    $('importFile').addEventListener('change',e=>{
+      const f=e.target.files[0];if(!f) return;const r=new FileReader();r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);localStorage.setItem(stateKey,JSON.stringify(parsed));alert('Imported!');location.reload()}catch(err){alert('Invalid file')}};r.readAsText(f);
+    })
+
+    // password / auth flows
+    $('setupBtn').addEventListener('click',async ()=>{
+      const pass=$('setupPass').value.trim();if(!pass) return alert('Enter a password');const h=await sha256(pass);localStorage.setItem(passKey,h);alert('Password set');showLogin();
+    })
+    $('skipSetup').addEventListener('click',()=>{localStorage.removeItem(passKey);startApp()});
+    $('goSignup').addEventListener('click',()=>{ $('loginBox').classList.add('hidden');$('signupBox').classList.remove('hidden');});
+    $('loginBtn').addEventListener('click',async ()=>{const pass=$('loginPass').value;const h=await sha256(pass);const store=localStorage.getItem(passKey);if(h===store){startApp()}else alert('Wrong password')});
+
+    $('logoutBtn').addEventListener('click',()=>{location.reload()});
+
+    // change / remove password
+    $('changePassBtn').addEventListener('click',async ()=>{
+      const oldp=$('oldPass').value;const newp=$('newPass').value;const store=localStorage.getItem(passKey);
+      if(!store) return alert('No password set');
+      const ho=await sha256(oldp);if(ho!==store) return alert('Current password incorrect');
+      const hn=await sha256(newp);localStorage.setItem(passKey,hn);alert('Password changed');$('oldPass').value='';$('newPass').value='';
+    })
+    $('removePass').addEventListener('click',()=>{if(confirm('Remove password? This will make data accessible to anyone using this browser.')){localStorage.removeItem(passKey);alert('Password removed');}})
+
+    // import initial UX
+    function showLogin(){
+      $('signupBox').classList.add('hidden');$('loginBox').classList.remove('hidden');
+    }
+
+    // boot
+    (function(){
+      const hasPass=!!localStorage.getItem(passKey);
+      if(hasPass){$('signupBox').classList.add('hidden');$('loginBox').classList.remove('hidden')}else{$('signupBox').classList.remove('hidden');$('loginBox').classList.add('hidden')}
+    })();
+
+    function startApp(){
+      $('auth').classList.add('hidden');$('app').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('welcomeTxt').textContent = 'Local mode';
+      renderNotes();renderSnippets();renderImages();
+    }
+
+    // small utilities
+    // If user already had no password, start immediately
+    if(!localStorage.getItem(passKey)) startApp();
+
+  </script>
+</body>
+</html>
